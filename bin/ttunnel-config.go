@@ -185,7 +185,7 @@ func addClient() {
 			cc := tt.ClientConfig{}
 			cc.Host = sc.ConnectAddr
 			cc.Port = int32(clientPort)
-			cc.Token = string(encToken)
+			cc.Token = encToken
 
 			if err = tt.WriteClientConfig(name, cc); err != nil {
 				showError(err)
