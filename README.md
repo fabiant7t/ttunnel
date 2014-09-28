@@ -47,12 +47,6 @@ certificate file should be placed in the following locations:
 ~/.ttunnel/server.crt
 ```
 
-##### Custom certificate authority
-
-If you're using a custom CA, you'll need to place the root's
-certificate in `~/.ttunnel/rootCA.crt` on the server and on all
-clients.
-
 #### Run the server
 
 The server can be run by calling `ttunnel-server`. 
@@ -71,9 +65,6 @@ prompts to create a configuration file for the client.
 When you are done, a configuration file will be created in
 `~/.ttunnel/tunnels/<name>.json`. Copy this file to the same location
 on the client. 
-
-Remember that you'll need the appropriate `~/.ttunnel/rootCA.crt` file
-if you're using a custom CA.
 
 #### Start the client
 

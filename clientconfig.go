@@ -1,10 +1,7 @@
 package ttunnel
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -33,37 +30,14 @@ type ClientConfig struct {
 // ReadClientConfig reads the named configuration from
 // $(HOME)/.ttunnel/tunnels/<name>.
 func ReadClientConfig(name string) (cc ClientConfig, err error) {
-	buf, err := ioutil.ReadFile(ClientConfigPath(name))
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(buf, &cc)
+	UnmarshalFrom(ClientConfigPath(name), & cc)
 	return
 }
 
 // WriteClientConfig writes the given configuration file to
 // $(HOME)/.ttunnel/tunnels/<name>.
 func WriteClientConfig(name string, cc ClientConfig) (err error) {
-	path := ClientConfigPath(name)
-
-	// Don't overwrite a tunnel configuration.
-	if FileExists(path) {
-		err = fmt.Errorf("Won't overwrite file: %v", path)
-		return
-	}
-
-	buf, err := json.Marshal(cc)
-	if err != nil {
-		return
-	}
-
-	var out bytes.Buffer
-	if err = json.Indent(&out, buf, "", "\t"); err != nil {
-		return
-	}
-
-	err = ioutil.WriteFile(path, out.Bytes(), 0600)
+	err = MarshalTo(ClientConfigPath(name), cc)
 	return
 }
 

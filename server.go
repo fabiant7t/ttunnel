@@ -17,12 +17,7 @@ func loadTlsConfig() (config *tls.Config, err error) {
 	// Load our server's cert.
 	config.Certificates = make([]tls.Certificate, 1)
 	config.Certificates[0], err = tls.LoadX509KeyPair(CertPath, KeyPath)
-	if err != nil {
-		return
-	}
 
-	// Load the custom rootCA.
-	err = loadRootCA(config)
 	return
 }
 

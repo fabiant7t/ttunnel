@@ -44,9 +44,9 @@ func copyConn(in, out net.Conn) {
 	}
 }
 
-func clientHandler(lConn net.Conn, cc *ClientConfig, config *tls.Config) {
+func clientHandler(lConn net.Conn, cc *ClientConfig) {
 	// Connect to server.
-	rConn, err := tls.Dial("tcp", cc.Host, config)
+	rConn, err := tls.Dial("tcp", cc.Host, nil)
 	if err != nil {
 		log.Printf("Error dialing server:\n    %v\n", err)
 		lConn.Close()
@@ -83,13 +83,6 @@ func RunClient(tunnelName string) error {
 		return err
 	}
 
-	// Create tls configuration using custom root certificate
-	// authority if it exists.
-	config := new(tls.Config)
-	if err = loadRootCA(config); err != nil {
-		return err
-	}
-
 	// Accept connections on the local port.
 	ln, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", cc.Port))
 	if err != nil {
@@ -103,7 +96,7 @@ func RunClient(tunnelName string) error {
 			continue
 		}
 
-		go clientHandler(lConn, &cc, config)
+		go clientHandler(lConn, &cc)
 	}
 
 	return nil

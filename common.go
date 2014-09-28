@@ -1,12 +1,12 @@
 package ttunnel
 
 import (
-	"crypto/rand"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
+	"bytes"
+	"crypto/rand"
 	"io"
 	"io/ioutil"
+	"encoding/json"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -64,26 +64,35 @@ func RandomBytes(length int) (key []byte, err error) {
 	return
 }
 
-// loadRootCA loads the custom root certificate authority if the
-// $(HOME)/.ttunnel/rootCA.crt file exists.
-func loadRootCA(config *tls.Config) error {
-
-	// If the file doesn't exist, we'll use the system's default.
-	if !FileExists(RootCAPath) {
-		return nil
-	}
-
-	// Load the custom rootCA.
-	config.RootCAs = x509.NewCertPool()
-
-	rootCert, err := ioutil.ReadFile(RootCAPath)
+// Helper function to unmarshal json from a file path. 
+func UnmarshalFrom(path string, v interface{}) (err error) {
+	buf, err := ioutil.ReadFile(path)
 	if err != nil {
-		return err
+		return
 	}
+	
+	err = json.Unmarshal(buf, &v)
 
-	if !config.RootCAs.AppendCertsFromPEM(rootCert) {
-		return fmt.Errorf("Failed to load root CA certificate.")
+	return
+}
+
+// Helper function to marshal json to a file path. 
+func MarshalTo(path string, v interface{}) (err error) {
+	if FileExists(path) {
+		err = fmt.Errorf("Won't overwrite file: %v", path)
+		return
 	}
-
-	return nil
+	
+	buf, err := json.Marshal(v)
+	if err != nil {
+		return
+	}
+	
+	var out bytes.Buffer
+	if err = json.Indent(&out, buf, "", "\t"); err != nil {
+		return 
+	}
+	
+	err = ioutil.WriteFile(path, out.Bytes(), 0600)
+	return
 }
