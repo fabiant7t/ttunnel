@@ -18,7 +18,7 @@ The ttunnel bin directory contains three applications:
 * ttunnel-config.go
 * ttunnel-server.go
 
-These should be fairly self-explanitory. The ttunnel-config program is
+These should be fairly self-explanitory. The `ttunnel-config` program is
 a small text-base interface for adminstering the server and
 generating client tokens.
 
