@@ -1,12 +1,12 @@
 package ttunnel
 
 import (
-	"fmt"
 	"bytes"
 	"crypto/rand"
+	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"encoding/json"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -16,7 +16,6 @@ var ConfigDir string  // Configuration directory.
 var ConfigPath string // The server configuration file path.
 var TunnelDir string  // Directory containing tunnels.
 var RemovedDir string // Removed client directory.
-var RootCAPath string // Path to rootCA.crt file.
 var CertPath string   // Path to X.509 certificate file.
 var KeyPath string    // Path to X.509 key file.
 
@@ -44,7 +43,6 @@ func init() {
 	}
 
 	// Initialize file paths.
-	RootCAPath = filepath.Join(ConfigDir, "rootCA.crt")
 	CertPath = filepath.Join(ConfigDir, "server.crt")
 	KeyPath = filepath.Join(ConfigDir, "server.key")
 }
@@ -64,35 +62,35 @@ func RandomBytes(length int) (key []byte, err error) {
 	return
 }
 
-// Helper function to unmarshal json from a file path. 
+// Helper function to unmarshal json from a file path.
 func UnmarshalFrom(path string, v interface{}) (err error) {
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
 		return
 	}
-	
+
 	err = json.Unmarshal(buf, &v)
 
 	return
 }
 
-// Helper function to marshal json to a file path. 
+// Helper function to marshal json to a file path.
 func MarshalTo(path string, v interface{}) (err error) {
 	if FileExists(path) {
 		err = fmt.Errorf("Won't overwrite file: %v", path)
 		return
 	}
-	
+
 	buf, err := json.Marshal(v)
 	if err != nil {
 		return
 	}
-	
+
 	var out bytes.Buffer
 	if err = json.Indent(&out, buf, "", "\t"); err != nil {
-		return 
+		return
 	}
-	
+
 	err = ioutil.WriteFile(path, out.Bytes(), 0600)
 	return
 }
