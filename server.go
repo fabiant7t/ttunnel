@@ -32,6 +32,12 @@ func handleServerConnection(rConn net.Conn, th *TokenHandler) {
 		return
 	}
 
+	if length > 512 {
+		log.Printf("Encoded token too long: %v bytes\n", length)
+		rConn.Close()
+		return
+	}
+
 	encToken := make([]byte, length)
 	_, err = rConn.Read(encToken)
 	if err != nil {
