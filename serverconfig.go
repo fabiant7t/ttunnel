@@ -32,7 +32,7 @@ func WriteServerConfig(sc ServerConfig) (err error) {
 		err = fmt.Errorf("Key must be 32 bytes, not %v bytes.", len(sc.EncKey))
 		return
 	}
-	
+
 	err = MarshalTo(ConfigPath, sc)
 	return
 }
