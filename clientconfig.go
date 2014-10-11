@@ -30,7 +30,7 @@ type ClientConfig struct {
 // ReadClientConfig reads the named configuration from
 // $(HOME)/.ttunnel/tunnels/<name>.
 func ReadClientConfig(name string) (cc ClientConfig, err error) {
-	UnmarshalFrom(ClientConfigPath(name), & cc)
+	UnmarshalFrom(ClientConfigPath(name), &cc)
 	return
 }
 
