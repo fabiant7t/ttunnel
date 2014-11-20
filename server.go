@@ -2,121 +2,84 @@ package ttunnel
 
 import (
 	"crypto/tls"
-	"encoding/binary"
 	"log"
 	"net"
-	"time"
 )
 
-// loadTlsConfig loads the TLS configuration. If
-// $(HOME)/.ttunnel/rootCA.crt exists, then it will be loaded as the
-// root certificate. If not, the defaults are used.
-func loadTlsConfig() (config *tls.Config, err error) {
-	config = new(tls.Config)
+func RunServer(listenAddr string) (err error) {
 
-	// Load our server's cert.
-	config.Certificates = make([]tls.Certificate, 1)
-	config.Certificates[0], err = tls.LoadX509KeyPair(CertPath, KeyPath)
-
-	return
-}
-
-// handleConnection
-func handleServerConnection(rConn net.Conn, th *TokenHandler) {
-	// Read the client's encrypted token.
-	var length uint16
-	err := binary.Read(rConn, binary.LittleEndian, &length)
+	// Load the key and certificate.
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
-		log.Printf("Error reading token length:\n    %v\n", err)
-		rConn.Close()
 		return
 	}
 
-	if length > 512 {
-		log.Printf("Encoded token too long: %v bytes\n", length)
-		rConn.Close()
+	// Create TLS configuration for the server.
+	config := tls.Config{Certificates: []tls.Certificate{cert}}
+
+	// Accept connections on the given address.
+	ln, err := tls.Listen("tcp", listenAddr, &config)
+	if err != nil {
 		return
 	}
 
-	encToken := make([]byte, length)
-	_, err = rConn.Read(encToken)
-	if err != nil {
-		log.Printf("Error reading encrypted token:\n    %v\n", err)
-		rConn.Close()
-		return
-	}
-
-	// Decode the client's encrypted token.
-	token, err := th.Decode(encToken)
-	if err != nil {
-		log.Printf("Error decoding token:\n    %v\n", err)
-		rConn.Close()
-		return
-	}
-
-	// Verify the token.
-	if err = th.Verify(token); err != nil {
-		log.Printf("Failed to verity token:\n    %v\n", err)
-		rConn.Close()
-		return
-	}
-
-	// Check the expiration date.
-	dt := token.Expires - time.Now().Unix()
-	days := dt / (3600 * 24)
-	log.Printf("Login from %v. Token expires in %v days.\n", token.Name, days)
-
-	// Create forwarded connection.
-	fConn, err := net.Dial("tcp", token.ConnectAddr)
-	if err != nil {
-		log.Printf("Failed to make forwarding connection:\n    %v\n", err)
-		rConn.Close()
-		return
-	}
-
-	// Forward connections.
-	forwardConnections(rConn, fConn)
-}
-
-// RunServer will run in the foreground forever if there are no errors
-// initializing the server.
-func RunServer() error {
-
-	// Load the server's configuration.
-	sc, err := ReadServerConfig()
-	if err != nil {
-		return err
-	}
-
-	// Create the token encoder.
-	th, err := NewTokenHandler(sc.EncKey)
-	if err != nil {
-		return err
-	}
-
-	// Get the tls configuration. If the rootCA.crt file exists, that will
-	// be used. Otherwise, use the system's certs.
-	config, err := loadTlsConfig()
-	if err != nil {
-		return err
-	}
-
-	// Listen on the ListenAddr.
-	ln, err := tls.Listen("tcp", sc.ListenAddr, config)
-	if err != nil {
-		return err
-	}
-
-	// Accept connections forever.
 	for {
-		rConn, err := ln.Accept()
+		conn, err := ln.Accept()
 		if err != nil {
 			log.Printf("Failed to accept connection: %v\n", err)
 			continue
 		}
 
-		go handleServerConnection(rConn, th)
+		go serverHandler(conn)
 	}
 
-	return nil
+	return
+}
+
+func serverHandler(conn net.Conn) {
+	cc := ClientConfig{}
+	var pwd []byte
+	var cConn net.Conn
+
+	// Get the client's name.
+	name, err := readBytes(conn, 256)
+	if err != nil {
+		log.Printf("Error reading name:\n    %v\n", err)
+		goto closeConn
+	}
+
+	// Load the client's configuration.
+	if err = cc.Load(clientsPath(string(name))); err != nil {
+		log.Printf("Failed to load client's configuration:\n    %v\n", err)
+		goto closeConn
+	}
+
+	// Get the client's password.
+	pwd, err = readBytes(conn, 256)
+	if err != nil {
+		log.Printf("Error reading password:\n    %v\n", err)
+		goto closeConn
+	}
+
+	// Check the client's password.
+	if !cc.PwdMatches(pwd) {
+		log.Printf("Invalid password for client %v:\n    %v\n", name, err)
+		goto closeConn
+	}
+
+	// Connect to the remote address for the client.
+	cConn, err = net.Dial("tcp", cc.ConnectAddr)
+	if err != nil {
+		log.Printf("Failed to connect to address %v for client %v:\n    %v\n",
+			cc.ConnectAddr, name, err)
+		goto closeConn
+	}
+
+	// Forward traffic.
+	log.Printf("Forwarding traffic for client %v.\n", string(name))
+	copyDuplex(cConn, conn)
+	return
+
+closeConn:
+	conn.Close()
 }

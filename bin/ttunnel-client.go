@@ -3,17 +3,28 @@ package main
 import (
 	"fmt"
 	tt "github.com/johnnylee/ttunnel"
-	"log"
 	"os"
+	"runtime"
 )
+
+func printUsage() {
+	fmt.Println("")
+	fmt.Printf("Usage: %v <config_name>\n", os.Args[0])
+	fmt.Println("")
+	fmt.Println("config_name:")
+	fmt.Println("    The name of the configuration to use.")
+	fmt.Println("")
+}
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Printf("Usage: %v <tunnel-name>\n", os.Args[0])
+		printUsage()
 		return
 	}
 
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	if err := tt.RunClient(os.Args[1]); err != nil {
-		log.Printf("Error running client:\n    %v\n", err)
+		fmt.Printf("Error running client:\n    %v\n", err)
 	}
 }
