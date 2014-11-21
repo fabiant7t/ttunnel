@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"net"
 	"os"
 	"time"
 )
@@ -48,7 +49,11 @@ func generateKeyAndCert(host string, isCA bool, rsaBits int) error {
 	}
 
 	// Set the host name.
-	template.DNSNames = append(template.DNSNames, host)
+	if ip := net.ParseIP(host); ip != nil {
+		template.IPAddresses = append(template.IPAddresses, ip)
+	} else {
+		template.DNSNames = append(template.DNSNames, host)
+	}
 
 	// Set certificate authority flags.
 	template.IsCA = true
