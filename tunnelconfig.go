@@ -4,8 +4,8 @@ package ttunnel
 // client's perspective.
 type TunnelConfig struct {
 	Host   string // The host address: <address>:<port>
-	Pwd    []byte // The password.
 	Port   int32  // The local port to listen on.
+	Secret string // The shared secret.
 	CaCert []byte // The CA certificate.
 }
 

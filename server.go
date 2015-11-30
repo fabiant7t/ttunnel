@@ -38,7 +38,7 @@ func RunServer(listenAddr string) (err error) {
 
 func serverHandler(conn net.Conn) {
 	cc := ClientConfig{}
-	var pwd []byte
+	var buf []byte
 	var cConn net.Conn
 
 	// Get the client's name.
@@ -54,15 +54,15 @@ func serverHandler(conn net.Conn) {
 		goto closeConn
 	}
 
-	// Get the client's password.
-	pwd, err = readBytes(conn, 256)
+	// Get the client's secret.
+	buf, err = readBytes(conn, 256)
 	if err != nil {
 		log.Printf("Error reading password:\n    %v\n", err)
 		goto closeConn
 	}
 
-	// Check the client's password.
-	if !cc.PwdMatches(pwd) {
+	// Check the client's secret.
+	if cc.Secret != string(buf) {
 		log.Printf("Invalid password for client %v:\n    %v\n", name, err)
 		goto closeConn
 	}
