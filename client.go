@@ -39,14 +39,14 @@ func RunClient(name string) error {
 			continue
 		}
 
-		go clientHandler(lConn, tc.Host, name, tc.Secret, config)
+		go clientHandler(lConn, tc.Host, name, tc.Pwd, config)
 	}
 
 	return nil
 }
 
 func clientHandler(
-	lConn net.Conn, host, name string, secret string, config tls.Config) {
+	lConn net.Conn, host, name string, pwd string, config tls.Config) {
 
 	// Dial remote server.
 	rConn, err := tls.Dial("tcp", host, &config)
@@ -64,7 +64,7 @@ func clientHandler(
 	}
 
 	// Send the password.
-	if err = writeBytes(rConn, []byte(secret)); err != nil {
+	if err = writeBytes(rConn, []byte(pwd)); err != nil {
 		log.Printf("Error sending secret:\n    %v\n", err)
 		goto closeConns
 	}

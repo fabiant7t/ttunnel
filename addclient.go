@@ -24,7 +24,7 @@ func AddClient(
 	tc.Host = hostAddr
 	tc.Port = localPort
 
-	tc.Secret, err = randomSecret()
+	tc.Pwd, err = randomSecret()
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func AddClient(
 	// Create the server's configuration file.
 	cc := ClientConfig{}
 	cc.ConnectAddr = connectAddr
-	cc.Secret = tc.Secret
+	cc.Secret = tc.Pwd
 
 	// Write the config files.
 	if err = tc.Save(clientTunnelPath(name)); err != nil {
