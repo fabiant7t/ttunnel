@@ -1,5 +1,9 @@
 package ttunnel
 
+import (
+	"github.com/johnnylee/goutil/jsonutil"
+)
+
 // A TunnelConfig represents the configuration of a tunnel from the
 // client's perspective.
 type TunnelConfig struct {
@@ -11,10 +15,10 @@ type TunnelConfig struct {
 
 // Load loads the tunnel configuration from the given file.
 func (tc *TunnelConfig) Load(path string) error {
-	return UnmarshalFromFile(path, tc)
+	return jsonutil.Load(tc, path)
 }
 
 // Save stores the tunnel configuration into the given file.
 func (tc TunnelConfig) Save(path string) error {
-	return MarshalToFile(path, &tc)
+	return jsonutil.Store(tc, path)
 }

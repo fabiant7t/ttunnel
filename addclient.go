@@ -1,18 +1,17 @@
 package ttunnel
 
 import (
-	"crypto/md5"
 	"crypto/rand"
-	"fmt"
+	"encoding/hex"
 )
 
 func randomSecret() (string, error) {
-	b := make([]byte, 128)
+	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%x", md5.Sum(b)), nil
+	return hex.EncodeToString(b), nil
 }
 
 // AddClient creates the named client tunnel configuration.
